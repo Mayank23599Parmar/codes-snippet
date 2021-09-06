@@ -1,0 +1,70 @@
+#Create an empty folder.
+#Create a file name config.yml
+#Copy and Paste below code.
+#This file contains the information needed for Shopify to authenticate
+# requests and edit/update your remote theme files.
+#
+# SETUP:
+# --------------------
+# 1. PASSWORD TOKEN : Request developer token from the pinned post of the workplace group.
+#
+# 2. THEME :Go to Shopify Admin > Online Store > Themes
+#
+# 3. THEME : Duplicate theme and rename it to "Dev-YOUR FIRST NAME" (Ex: "Dev-Greg")
+#
+# 4. THEME ID : Select Actions > Edit Code and copy the ID from the ending portion of the URL on that page it loads (This is your Theme ID)
+#
+# 5. THEME ID : Paste your theme ID to the "THEME_ID_HERE" field below
+#
+# 6. STORE NAME : Copy the shopify base url's name to the STORE_NAME field below (Ex: "lucent-theme-10.myshopify.com" )
+#
+#
+# DOCUMENTATION LINKS:
+# --------------------
+#   Config Variables | http://shopify.github.io/themekit/configuration
+#   Ignore Patterns  | http://shopify.github.io/themekit/ignores
+
+
+development:
+  password:  12345
+  theme_id: "12345"
+  store: store.myshopify.com
+  ignore_files:
+    - README.md
+    - .gitignore
+    - config/settings_data.json
+    - assets/bundle.js.map
+    - locales/
+    - "*.png"
+    - "*.jpg"  
+    - "*.jpeg" 
+    - "*.svg" 
+    - "*.gif" 
+    - "*.mp4"
+    - "*.JPG"
+    - "*eot"
+    - "*woff"
+    - "*ttf"
+    - "*.js.map"
+
+production:
+  password:  12345
+  theme_id: "12345"
+  store: store.myshopify.com
+  ignore_files:
+    - README.md
+    - .gitignore
+    - config/settings_data.json
+    - assets/bundle.js.map
+    - locales/
+    - "*.png"
+    - "*.jpg"  
+    - "*.jpeg" 
+    - "*.svg" 
+    - "*.gif" 
+    - "*.mp4"
+    - "*.JPG"
+    - "*eot"
+    - "*woff"
+    - "*ttf"
+    - "*.js.map"
