@@ -1,0 +1,539 @@
+@mixin transform($transforms) {
+  -moz-transform: $transforms;
+  -o-transform: $transforms;
+  -ms-transform: $transforms;
+  -webkit-transform: $transforms;
+  transform: $transforms;
+}
+
+@mixin transition($transition) {
+  -moz-transition: $transition;
+  -o-transition: $transition;
+  -ms-transition: $transition;
+  -webkit-transition: $transition;
+  transition: $transition;
+}
+
+@mixin keyframes($animationName) {
+  @-webkit-keyframes #{$animationName} {
+    @content;
+  }
+
+  @-moz-keyframes #{$animationName} {
+    @content;
+  }
+
+  @-o-keyframes #{$animationName} {
+    @content;
+  }
+
+  @keyframes #{$animationName} {
+    @content;
+  }
+}
+
+@mixin background-opacity($color, $opacity: 0.5) {
+  background: $color;
+  background: rgba($color, $opacity);
+}
+
+@mixin font_size($sizeValue: 1.6) {
+  font-size: ($sizeValue * 10) + px;
+  font-size: $sizeValue + rem;
+}
+
+/* MIXIN : LINEAR GRADIENT
+   *    EX : @include linear-gradient((90deg, #000 0%, rgba(0,0,0,0) 100%));
+   * ------------------------------------------------------------------------- */
+@mixin linear-gradient($value) {
+  background: -webkit-linear-gradient($value);
+  background: -moz-linear-gradient($value);
+  background: -o-linear-gradient($value);
+}
+
+
+/* MIXIN : MEDIA QUERIES
+   *    EX : @include mq( 'lap-and-up' ) { CODE }
+   * ------------------------------------------------------------------------- */
+$phone: "screen and (max-width: 767px)";
+$phone-portrait: "screen and (max-width: 551px)";
+$phone-landscape: "screen and (min-width: 552px) and (max-width: 767px)";
+$tablet: "screen and (min-width: 768px) and (max-width: 1024px)";
+$phone-and-tablet: "screen and (max-width: 1024px)";
+$tablet-and-up: "screen and (min-width: 768px)";
+$tablet-portrait: "screen and (min-width: 768px) and (max-width: 991px)";
+$tablet-landscape: "screen and (min-width: 992px) and (max-width: 1024px)";
+$lap: "screen and (min-width: 1025px) and (max-width: 1199px)";
+$lap-and-up: "screen and (min-width: 1025px)";
+$desk-and-up: "screen and (min-width: 1200px)";
+$large-desk-and-up: "screen and (min-width: 1400px)";
+$lap-and-desk: "screen and (min-width: 1025px) and (max-width: 1679px)";
+
+@mixin mq($alias) {
+  @if $alias=="phone" {
+    @media #{$phone} {
+      @content;
+    }
+  }
+
+  @else if $alias=="phone-portrait" {
+    @media #{$phone-portrait} {
+      @content;
+    }
+  }
+
+  @else if $alias=="phone-landscape" {
+    @media #{$phone-landscape} {
+      @content;
+    }
+  }
+
+  @else if $alias=="tablet" {
+    @media #{$tablet} {
+      @content;
+    }
+  }
+
+  @else if $alias=="phone-and-tablet" {
+    @media #{$phone-and-tablet} {
+      @content;
+    }
+  }
+
+  @else if $alias=="tablet-and-up" {
+    @media #{$tablet-and-up} {
+      @content;
+    }
+  }
+
+  @else if $alias=="tablet-portrait" {
+    @media #{$tablet-portrait} {
+      @content;
+    }
+  }
+
+  @else if $alias=="tablet-landscape" {
+    @media #{$tablet-landscape} {
+      @content;
+    }
+  }
+
+  @else if $alias=="lap" {
+    @media #{$lap} {
+      @content;
+    }
+  }
+
+  @else if $alias=="lap-and-up" {
+    @media #{$lap-and-up} {
+      @content;
+    }
+  }
+
+  @else if $alias=="desk-and-up" {
+    @media #{$desk-and-up} {
+      @content;
+    }
+  }
+
+  @else if $alias=="lap-and-desk" {
+    @media #{$lap-and-desk} {
+      @content;
+    }
+  }
+
+  @else if $alias=="large-desk-and-up" {
+    @media #{$large-desk-and-up} {
+      @content;
+    }
+  }
+
+  @else {
+    @media (#{$alias}) {
+      @content;
+    }
+  }
+}
+
+@mixin flexbox() {
+  display: -webkit-box;
+  display: -moz-box;
+  display: -ms-flexbox;
+  display: -webkit-flex;
+  display: flex;
+}
+
+@mixin align-items($align) {
+  -webkit-box-align: $align;
+  -webkit-flex-align: $align;
+  -ms-flex-align: $align;
+  -webkit-align-items: $align;
+  align-items: $align;
+}
+
+@mixin flex-direction($direction) {
+  flex-direction: $direction;
+  -webkit-flex-direction: $direction;
+}
+
+@mixin flex-wrap($wrap) {
+  flex-wrap: $wrap;
+  -webkit-flex-wrap: $wrap;
+}
+
+@mixin justify-content($content) {
+  justify-content: $content;
+  -webkit-justify-content: $content;
+}
+
+@mixin flex-grow($content) {
+  -webkit-box-flex: $content;
+  -ms-flex-positive: $content;
+  flex-grow: $content;
+}
+
+@mixin flex-shrink($content) {
+  -ms-flex-negative: 0;
+  flex-shrink: 0;
+}
+
+@mixin inline-flex() {
+  display: -webkit-inline-box;
+  display: -ms-inline-flexbox;
+  display: inline-flex;
+}
+
+@mixin grid() {
+  display: -ms-grid;
+  display: grid
+}
+
+@mixin grid-template-columns($content) {
+  -ms-grid-columns: $content;
+  grid-template-columns: $content;
+}
+
+
+
+
+
+.header-wrapper {
+  background-color: #dddddd;
+}
+
+.mt-10 {
+  margin-top: 10px;
+}
+
+.container-small {
+  max-width: 1000px;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 0 50px;
+}
+
+.container {
+  max-width: 1170px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.container-fluid {
+  max-width: 100%;
+  padding-left: 15px;
+  padding-right: 15px;
+}
+
+
+
+.gap-none {
+  gap: .0rem;
+}
+
+.gap-5 {
+  gap: .5rem;
+}
+
+.gap-10 {
+  gap: 1.0rem;
+}
+
+.gap-15 {
+  gap: 1.5rem;
+}
+
+.gap-20 {
+  gap: 2.0rem;
+}
+
+.gap-25 {
+  gap: 2.5rem;
+}
+
+.gap-30 {
+  gap: 3.0rem;
+}
+
+.grid-wrapper {
+  @include flexbox();
+  @include flex-wrap(wrap);
+}
+
+
+.header-wrapper {
+  padding: 15px 0px;
+}
+
+
+/* Desktop and Up Grid */
+@include mq("lap-and-up") {
+  .grid-cols-1 {
+    @include flex-grow(1);
+    @include flex-shrink(0);
+    width: calc(8.333333% - 3rem * 3 / 4);
+  }
+
+  .grid-cols-2 {
+    @include flex-grow(1);
+    @include flex-shrink(0);
+    width: calc(16.666667% - 3rem * 3 / 4);
+  }
+
+  .grid-cols-3 {
+    @include flex-grow(1);
+    @include flex-shrink(0);
+    width: calc(25% - 3rem * 3 / 4);
+  }
+
+  .grid-cols-4 {
+    @include flex-grow(1);
+    @include flex-shrink(0);
+    width: calc(33.333333% - 3rem * 3 / 4);
+  }
+
+  .grid-cols-5 {
+    @include flex-grow(1);
+    @include flex-shrink(0);
+    width: calc(50% - 3rem * 3 / 4);
+  }
+
+  .grid-cols-6 {
+    @include flex-grow(1);
+    @include flex-shrink(0);
+    width: calc(50% - 3rem * 3 / 4);
+  }
+
+  .grid-cols-7 {
+    @include flex-grow(1);
+    @include flex-shrink(0);
+    width: calc(58.333333% - 3rem);
+  }
+
+  .grid-cols-8 {
+    @include flex-grow(1);
+    @include flex-shrink(0);
+    width: calc(66.666667% - 3rem);
+  }
+
+  .grid-cols-9 {
+    @include flex-grow(1);
+    @include flex-shrink(0);
+    width: calc(75% - 3rem);
+  }
+
+  .grid-cols-10 {
+    @include flex-grow(1);
+    @include flex-shrink(0);
+    width: calc(83.333333% - 3rem);
+  }
+
+  .grid-cols-11 {
+    @include flex-grow(1);
+    @include flex-shrink(0);
+    width: calc(91.666667% - 3rem);
+  }
+
+  .grid-cols-12 {
+    @include flex-grow(1);
+    @include flex-shrink(0);
+    width: 100%;
+  }
+
+  .grid-cols-left-push-1 {
+    margin-left: 8.33333%;
+    margin-right: 8.33333%;
+  }
+
+  .grid-cols-right-push-1 {
+    margin-left: 8.33333%;
+    margin-right: 8.33333%;
+  }
+}
+
+
+/* Tablet and Up Grid */
+@include mq("tablet") {
+  .grid-cols-sm-1 {
+    @include flex-grow(1);
+    @include flex-shrink(0);
+    width: calc(8.333333% - 3rem);
+  }
+
+  .grid-cols-sm-2 {
+    @include flex-grow(1);
+    @include flex-shrink(0);
+    width: calc(16.666667% - 3rem);
+  }
+
+  .grid-cols-sm-3 {
+    @include flex-grow(1);
+    @include flex-shrink(0);
+    width: calc(25% - 3rem);
+  }
+
+  .grid-cols-sm-4 {
+    @include flex-grow(1);
+    @include flex-shrink(0);
+    width: calc(33.333333% - 3rem);
+  }
+
+  .grid-cols-sm-5 {
+    @include flex-grow(1);
+    @include flex-shrink(0);
+    width: calc(50% - 3rem * 3 / 4);
+  }
+
+  .grid-cols-sm-6 {
+    @include flex-grow(1);
+    @include flex-shrink(0);
+    width: calc(50% - 3rem);
+  }
+
+  .grid-cols-sm-7 {
+    @include flex-grow(1);
+    @include flex-shrink(0);
+    width: calc(58.333333% - 3rem);
+  }
+
+  .grid-cols-sm-8 {
+    @include flex-grow(1);
+    @include flex-shrink(0);
+    width: calc(66.666667% - 3rem);
+  }
+
+  .grid-cols-sm-9 {
+    @include flex-grow(1);
+    @include flex-shrink(0);
+    width: calc(75% - 3rem);
+  }
+
+  .grid-cols-sm-10 {
+    @include flex-grow(1);
+    @include flex-shrink(0);
+    width: calc(83.333333% - 3rem);
+  }
+
+  .grid-cols-sm-11 {
+    @include flex-grow(1);
+    @include flex-shrink(0);
+    width: calc(91.666667% - 3rem);
+  }
+
+  .grid-cols-sm-12 {
+    @include flex-grow(1);
+    @include flex-shrink(0);
+    width: 100%;
+  }
+}
+
+/* Mobile and Up Grid */
+@include mq("phone") {
+  .grid-cols-xs-1 {
+    @include flex-grow(1);
+    @include flex-shrink(0);
+    width: calc(8.333333% - 3rem);
+  }
+
+  .grid-cols-xs-2 {
+    @include flex-grow(1);
+    @include flex-shrink(0);
+    width: calc(16.666667% - 3rem);
+  }
+
+  .grid-cols-xs-3 {
+    @include flex-grow(1);
+    @include flex-shrink(0);
+    width: calc(25% - 3rem);
+  }
+
+  .grid-cols-xs-4 {
+    @include flex-grow(1);
+    @include flex-shrink(0);
+    width: calc(33.333333%% - 3rem);
+  }
+
+  .grid-cols-xs-5 {
+    @include flex-grow(1);
+    @include flex-shrink(0);
+    width: calc(50% - 3rem * 3 / 4);
+  }
+
+  .grid-cols-xs-6 {
+    @include flex-grow(1);
+    @include flex-shrink(0);
+    width: calc(50% - 3rem);
+  }
+
+  .grid-cols-xs-7 {
+    @include flex-grow(1);
+    @include flex-shrink(0);
+    width: calc(58.333333% - 3rem);
+  }
+
+  .grid-cols-xs-8 {
+    @include flex-grow(1);
+    @include flex-shrink(0);
+    width: calc(66.666667% - 3rem);
+  }
+
+  .grid-cols-xs-9 {
+    @include flex-grow(1);
+    @include flex-shrink(0);
+    width: calc(75% - 3rem);
+  }
+
+  .grid-cols-xs-10 {
+    @include flex-grow(1);
+    @include flex-shrink(0);
+    width: calc(83.333333% - 3rem);
+  }
+
+  .grid-cols-xs-11 {
+    @include flex-grow(1);
+    @include flex-shrink(0);
+    width: calc(91.666667% - 3rem);
+  }
+
+  .grid-cols-xs-12 {
+    @include flex-grow(1);
+    @include flex-shrink(0);
+    width: 100%;
+  }
+
+  .cols-push-xs-1 {
+    @include flex-grow(1);
+    @include flex-shrink(0);
+    width: calc(8.333333% - 3rem);
+  }
+}
+
+
+
+
+.background {
+  background: rgb(83, 80, 80);
+  border-radius: 5px;
+  text-align: center;
+  color: #ffffff;
+}
+
