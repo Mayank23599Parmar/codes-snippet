@@ -415,6 +415,37 @@ const reactShopifyAnalytics = ({pageType,resourceType,resourceId}) =>{
       console.log(e);
     }
 }
+export const getProductData = async (handle) => {
+  let url = window.location.origin + '/products/' + handle + '.json';
+  let getProductData = await fetch(url);
+  return await getProductData.json();
+}
+
+/* get Product metafields Data [Subtitle]*/
+export const getProductMetaData = async (handle) => {
+  let url = window.location.origin +'/products/' + handle + '?view=metafield';
+  let getProductMetaData = await fetch(url);
+  return await getProductMetaData.text();
+}
+
+/* Add to Cart */
+export const addToCart = async (data, cb = undefined) => {
+  let res = await fetch('/cart/add.js', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(data),
+  });
+
+  res = await res.json();
+
+  if(cb){
+    cb();
+  }
+}
+
+e
 
 export {
   imgURL,
@@ -440,5 +471,8 @@ export {
   discountCalculator,
   saveCalculator,
   reactShopifyAnalytics
-  // scrollToElement
+  // scrollToElement,
+getProductMetaData,
+  getProductData
+
 }
