@@ -23,12 +23,14 @@ export async function getThemeSetting(pageType) {
             if(sectionData?.status === 200) {
                 if(sectionData?.data?.asset?.value){
                     sectionData=await JSON.parse(sectionData.data.asset.value)
+                     // for section theme setting order. gives customiser section order
                     for (let index = 0; index < sectionData.order.length; index++) {
                       const sectionName = sectionData.order[index];
                       const sectionValue=sectionData.sections[sectionName]
                       // check section have blocks or not
                       if(sectionValue?.block_order?.length > 0){
                         const blocksData=[]
+                             // for section blocks setting order. gives customiser section blocks order
                         for (let j = 0; j < sectionValue?.block_order.length; j++) {
                           const block = sectionValue?.block_order[j];
                           blocksData.push(sectionValue.blocks[block])
