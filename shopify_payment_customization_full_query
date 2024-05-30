@@ -1,0 +1,104 @@
+query RunInput {
+  presentmentCurrencyRate
+   cart {
+       # Cart line attribute to get the fabric length provided by the customer
+    # fabricLength: attribute(key: "Fabric Length") {
+    #     value
+    #   }
+      
+    buyerIdentity{
+      isAuthenticated
+      email
+      phone
+      customer{
+        displayName
+        # firstName
+        # lastName
+        numberOfOrders
+      }
+    }
+    cost {
+      totalAmount {
+        amount
+      }
+    }
+    lines {
+      # id
+      quantity
+     cost {
+        # amountPerQuantity {
+        #   amount
+        #   currencyCode
+        # }
+        # compareAtAmountPerQuantity{
+        #   amount
+        #   currencyCode
+        # }
+        # subtotalAmount{
+        #   amount
+        #   currencyCode
+        # }
+        totalAmount{
+          amount
+          # currencyCode
+        }
+      }
+      merchandise {
+        __typename
+        ... on ProductVariant {
+          # id
+          title
+          requiresShipping
+          # sku
+          product{
+            productType
+            vendor
+            hasTags(tags:["code_hide"]){
+              hasTag
+              tag 
+            }
+          }
+          componentQuantities: metafield(
+            namespace: "custom"
+            key: "component_quantities"
+          ) {
+            value
+          }
+        }
+      }
+    }
+    deliveryGroups {
+      deliveryAddress {
+        provinceCode
+      }
+      deliveryOptions {
+        handle
+        title
+      }
+    }
+  }
+  paymentMethods {
+    id
+    name
+  }
+  paymentCustomization {
+    metafield(namespace: "function-configuration", key: "payment-customization") {
+      value
+    }
+  }
+  # localization{
+  #   country{
+  #     isoCode
+  #   }
+  #   language{
+  #     isoCode
+  #   }
+  #   market{
+  #     handle
+  #     id
+  #     regions{
+  #       name
+  #     }
+  #   }
+  # }
+}
