@@ -1,0 +1,35 @@
+How to add App Icon and Splash Screen in React Native
+Setup of app Icons
+App Icon size :- 1024x1024
+https://icon.kitchen/
+Setups of Splash Screen
+Splash Screen Size:- 4096*4096 pixels
+https://apetools.webprofusion.com/?source=post_page---------------------------#/tools/imagegorilla
+npm i react-native-splash-screen
+​
+inside → android/app/src/main/java/com/projectName/MainAcitivity.kt
+import android.os.Bundle; 
+import org.devio.rn.splashscreen.SplashScreen; 
+​
+After that
+      override fun onCreate(savedInstanceState: Bundle?) {
+    SplashScreen.show(this)  // here
+    super.onCreate(savedInstanceState)
+}
+​
+Inside res create a layout directory and create a file launch_screen.xml
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" 
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#121928">
+
+    <ImageView 
+        android:layout_width="wrap_content" 
+        android:layout_height="wrap_content" 
+        android:src="@drawable/screen" 
+        android:scaleType="centerCrop" 
+        android:layout_centerInParent="true" /> 
+
+</RelativeLayout>
