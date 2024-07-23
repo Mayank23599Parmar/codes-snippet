@@ -28,7 +28,7 @@ async function shopify_user_login(params) {
 //     <input type="hidden" name="utf8" value="✓">
 //     <input type="email" name="customer[email]">
 //     <input type="password" name="customer[password]">
-//     <input type="hidden" name="return_url" value="/pages/attendance-details">
+//     <input type="hidden" name="return_url" value="redirection URL">
 //     <button type="submit">Login</button>
 //   </form>
 // </div>
