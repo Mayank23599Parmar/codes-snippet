@@ -1,47 +1,28 @@
 var webpack = require("webpack");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 var config = {
-  module: {}
+  module: {},
 };
-module.sorceEnable = false;
+module.sourceEnable = false;
 
 const returnAll = watchFile => {
-
-  var checkoutPage = Object.assign({}, config, {
-    entry: ["@babel/polyfill", "./javascript/app-checkout.js"],
-    watch: watchFile,
-    output: {
-      path: __dirname,
-      filename: "theme/assets/theme-checkout.js"
-    },
-    module: {
-      rules: [
-        {
-          test: /\.m?js$/,
-          exclude: /(node_modules|bower_components)/,
-          use: {
-            loader: "babel-loader",
-            options: {
-              presets: ["@babel/preset-env"],
-              plugins: ["@babel/plugin-proposal-class-properties"]
-            }
-          }
-        }
-      ]
-    },
-    plugins: [
-      new webpack.ProvidePlugin({
-        $: "jquery",
-        jQuery: "jquery"
-      })
-    ]
-  });
   var allPages = Object.assign({}, config, {
-    entry: ["@babel/polyfill", "./javascript/app.js"],
+    entry: {
+    
+      'theme-index': './javascript/template-index.js',
+      'theme-collection': './javascript/template-collection.js',
+      'theme-list-collections': './javascript/template-list-collections.js',
+      'theme-product': './javascript/template-product.js',
+      'theme-cart': './javascript/template-cart.js',
+      'theme-page': './javascript/template-page.js',
+      'theme-blog-article': './javascript/template-blog-article.js',
+      'theme-account': './javascript/template-account.js',
+      'theme-global':'./javascript/template-global.js'
+    },
     watch: watchFile,
     output: {
       path: __dirname,
-      filename: "theme/assets/theme.js"
+      filename: "theme/assets/[name].js"
     },
     module: {
       rules: [
@@ -77,17 +58,68 @@ const returnAll = watchFile => {
       new MiniCssExtractPlugin({
         // Options similar to the same options in webpackOptions.output
         // both options are optional
-        filename: "theme/assets/theme.css"
-      }),
-      new webpack.ProvidePlugin({
-        $: "jquery",
-        jQuery: "jquery"
+        filename: "theme/assets/[name].css"
       })
     ]
   });
+  var reactApp = Object.assign({}, config, {
+    entry: ["@babel/polyfill", "./src/index.js"],
+    watch: watchFile,
+    output: {
+      path: __dirname,
+     filename: "theme/assets/theme-react.js",
+    },
+    devServer: {
+      historyApiFallback: true
+    },
+    resolve: {
+      extensions: ['.js', '.jsx'],
+    },
+    module: {
+     
+      rules: [
+        {
+          test: /\.(js|jsx)$/,
+          use: {
+            loader: "babel-loader",
+            options: {
+              presets: ["@babel/preset-env",'@babel/preset-react'],
+              plugins: ["@babel/plugin-proposal-class-properties",]
+            }
+          }
+        },
+        {
+          test: /\.(png|j?g|svg|gif)?$/,
+          use: 'file-loader'
+       },
+        {
+          test: /\.scss$/,
+          use: [
+            { loader: 'style-loader' },
+            { loader: 'css-loader' },
+            { loader: 'sass-loader' },
+
+          ]
+        },
+        {
+          test: /\.css$/,
+          use: [
+            { loader: 'style-loader' },
+            { loader: 'css-loader' },
+            { loader: 'sass-loader' },
+
+          ]
+        },
+      ],
+    },
+    plugins: [
+      
+
+    ]
+  });
   return [
-    checkoutPage,
     allPages,
+    reactApp,
   ];
 }
 // Return Array of Configurations
@@ -99,3 +131,4 @@ module.exports = (env, argv) => {
   return returnAll(watchFile);
 
 };
+// package.json
