@@ -132,3 +132,60 @@ module.exports = (env, argv) => {
 
 };
 // package.json
+{
+    "name": "mayank-parmar",
+    "version": "1.0.0",
+    "description": "",
+    "main": "webpack.config.js",
+    "config": {
+        "store": "",
+        "dev_theme": "",
+        "prod_theme": ""
+    },
+    "scripts": {
+        "dev": "concurrently -n webpack,shopify  -c \"bgBlue.bold,bgGreen.bold\"  \"npm run webpeck-dev\" \"npm run shopify-open\"",
+        "webpeck-dev": "webpack --mode development",
+        "webpeck-prod": "webpack --mode production",
+        "shopify-pull-json-live": "shopify theme pull -t %npm_package_config_prod_theme% --only templates/**/*.json --only templates/*.json --only config/*.json --only sections/*.json --only locales/*.json --path ./theme",
+        "shopify-push-json-live": "shopify theme push -t %npm_package_config_prod_theme% --only templates/**/*.json --only config/*.json --only sections/*.json --only locales/*.json --path ./theme",
+        "shopify-push-json": "shopify theme push -t %npm_package_config_dev_theme% --only templates/**/*.json --only config/*.json --only sections/*.json --only locales/*.json --path ./theme",
+        "shopify-push": "shopify theme push -t %npm_package_config_dev_theme% --ignore \"config/*.json\" --ignore \"templates/**/*.json\" --ignore \"sections/*.json \"  --path ./theme",
+        "shopify-push-live": "shopify theme push -t %npm_package_config_prod_theme%  --allow-live --ignore \"config/*.json\" --ignore \"templates/**/*.json\" --ignore \"sections/*.json \" --path ./theme",
+        "shopify-open": "shopify theme dev -s %npm_package_config_store%  -t %npm_package_config_dev_theme% --ignore \"config/*.json\" --ignore \"templates/**/*.json\" --ignore \"sections/*.json \" --path ./theme",
+        "shopify-pull": "shopify theme pull -t %npm_package_config_dev_theme% --ignore \"config/*.json\" --ignore \"templates/**/*.json\" --ignore \"sections/*.json \" --path ./theme",
+        "shopify-pull-json": "shopify theme pull -t %npm_package_config_dev_theme% --only templates/**/*.json --only templates/*.json --only config/*.json --only sections/*.json --only locales/*.json --path ./theme",
+        "build": "concurrently -n webpack,shopify -c \"bgBlue.bold,bgGreen.bold\"  \"npm run webpeck-prod\" \"npm run shopify-push\"",
+        "deploy": "concurrently -n webpack,shopify -c \"bgBlue.bold,bgGreen.bold\"  \"npm run webpeck-prod\" \"npm run shopify-push-live\"",
+        "info": "shopify theme info",
+        "logout": "shopify auth logout",
+        "login": "shopify theme dev -s %npm_package_config_store%"
+    },
+    "author": "Mayank Parmar",
+    "license": "ISC",
+    "devDependencies": {
+        "@babel/core": "^7.22.17",
+        "@babel/plugin-proposal-class-properties": "^7.18.6",
+        "@babel/polyfill": "^7.12.1",
+        "@babel/preset-env": "^7.22.15",
+        "@babel/preset-react": "^7.22.15",
+        "@babel/preset-stage-0": "^7.0.0",
+        "babel-loader": "^9.1.3",
+        "babel-preset-react-optimize": "^1.0.1",
+        "concurrently": "^8.2.2",
+        "css-loader": "^7.1.2",
+        "license-webpack-plugin": "^4.0.2",
+        "mini-css-extract-plugin": "^2.9.0",
+        "node-sass": "^9.0.0",
+        "react": "^18.2.0",
+        "react-dom": "^18.2.0",
+        "sass": "^1.77.6",
+        "sass-loader": "^14.2.1",
+        "webpack": "^5.92.0",
+        "webpack-cli": "^5.1.4"
+    },
+    "dependencies": {
+        "react-router-dom": "^6.26.1",
+        "swiper": "^11.1.9"
+    }
+}
+
