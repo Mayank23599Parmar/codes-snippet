@@ -1,0 +1,134 @@
+{% assign currency_js_url = 'currencies.js' | shopify_asset_url  %}
+<script src="{{ currency_js_url }}" ></script>
+<script>
+    const cacheKey = "hw_shopify_user_country";
+    const cacheTimeKey = "hw_shopify_user_country_time";
+    // add market country and currency here
+    const SPECIAL_CURRENCIES = {
+        "AE": "AED", // UAE
+        "BH": "BHD", // Bahrain
+        "KW": "KWD", // Kuwait
+        "OM": "OMR", // Oman
+        "QA": "QAR", // Qatar
+        "SA": "SAR", // Saudi Arabia
+    };
+    function extractNumericPrice(priceString) {
+        if (!priceString) return 0; // Return 0 if the string is empty
+
+        // Remove currency symbols, spaces, and commas, keeping only numbers
+        let numericPrice = priceString.replace(/[^\d]/g, '');
+
+        return parseFloat(numericPrice) || 0; // Convert to number and return
+    }
+    /**
+     * Fetch user's country using Shopify's browsing context API
+     * Caches the response in localStorage for 30 minutes to reduce API calls
+     */
+    async function getUserCountry(manualCountry = undefined) {  
+        const cacheExpiration = 30 * 60 * 1000; // 30 minutes
+
+        try {
+            if (manualCountry) {
+                // If user provides a country, store it in localStorage
+                localStorage.setItem(cacheKey, manualCountry);
+                localStorage.setItem(cacheTimeKey, Date.now());
+                return manualCountry;
+            }
+            if(typeof(manualCountry) == 'string' && manualCountry == ""){
+                localStorage.removeItem(cacheKey);
+                localStorage.removeItem(cacheTimeKey);
+            }
+
+            const cachedCountry = localStorage.getItem(cacheKey);
+            const cachedTime = localStorage.getItem(cacheTimeKey);
+
+            if (cachedCountry && cachedTime && (Date.now() - cachedTime < cacheExpiration)) {
+                return cachedCountry; // Return cached country if available
+            }
+
+            const response = await fetch(
+                `${window.Shopify.routes.root}browsing_context_suggestions.json?country[enabled]=true`
+            );
+            const data = await response.json();
+
+            if (data?.detected_values?.country?.handle) {
+                localStorage.setItem(cacheKey, data.detected_values.country.handle);
+                localStorage.setItem(cacheTimeKey, Date.now());
+                return data.detected_values.country.handle;
+            }
+        } catch (error) {
+            console.error("Error fetching user country:", error);
+        }
+        return window.Shopify?.currency?.active || "USD"; // Fallback to store's default currency
+    }
+    /**
+       * Convert price using Shopify's Currency.convert function (if available)
+       * or fallback to manually adjusting it based on store default.
+    */
+    function convertCurrency(amount, fromCurrency, toCurrency) {
+
+        if (typeof Currency !== "undefined" && Currency.convert) {
+            const convertedAmount = Currency.convert(amount, fromCurrency, toCurrency);
+            if (convertedAmount >= 0) {
+                return { convertedAmount: Math.round(convertedAmount), convertedCurrency: toCurrency };
+            }
+        } else {
+            console.warn("Currency.convert is not available. Using fallback.");
+            return { convertedAmount: amount, convertedCurrency: fromCurrency };
+        }
+
+    }
+
+    /**
+     * Update all displayed product prices based on the detected country
+     * Adds a 20% increase, removes decimals, and applies the correct currency format
+     */
+    async function updatePricesWithRules(manualCountry=undefined) {
+        try {
+            let userCountry = await getUserCountry(manualCountry);
+            let targetCurrency;
+            if (userCountry) {
+                targetCurrency = SPECIAL_CURRENCIES[userCountry] || "USD";
+            }
+            let storeCurrency = window.Shopify?.currency?.active || "AED";
+
+            const getAllCurrenciesSelector = document.querySelectorAll('span.money')
+            
+            if (getAllCurrenciesSelector) {
+                getAllCurrenciesSelector.forEach(priceElement => {
+                    const cachedCountry = localStorage.getItem(cacheKey); 
+                    
+                     const getStoreCurrencyAmmount=priceElement.getAttribute(`data-currency-${storeCurrency?.toLowerCase()}`)
+                     let originalPrice = extractNumericPrice(priceElement.innerHTML);
+                     if(getStoreCurrencyAmmount){
+                        originalPrice = extractNumericPrice(getStoreCurrencyAmmount);
+                     }
+                    if (isNaN(originalPrice)) return; // Skip if price is invalid
+                    let { convertedAmount, convertedCurrency } = convertCurrency(originalPrice, storeCurrency, targetCurrency);
+                    // Update displayed price with the correct currency
+                    priceElement.innerHTML = `${convertedCurrency} ${convertedAmount}`;
+                    priceElement.setAttribute(`data-currency`, `${targetCurrency}`);
+                    priceElement.setAttribute(`data-converted-currency`, `${convertedCurrency} ${convertedAmount}`);
+                    console.log("mmmmmmmmmmmmm")
+                    if(!getStoreCurrencyAmmount){
+                        priceElement.setAttribute(`data-currency-${storeCurrency?.toLowerCase()}`, `${storeCurrency} ${originalPrice}`);   
+                    }
+                });
+            }
+        } catch (error) {
+            console.error("Error updating prices:", error);
+        }
+    }
+
+    window.hwCurrencyConverterLoad = async function (currency=undefined) { updatePricesWithRules(currency); };
+    // Automatically run when the page loads
+
+   // hwCurrencyConverterLoad() intial function load
+
+   // hwCurrencyConverterLoad("") remove local storage and fresh load
+
+    // hwCurrencyConverterLoad("KW") country vise conversion
+
+
+</script>
+
