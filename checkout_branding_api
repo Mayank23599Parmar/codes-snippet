@@ -1,0 +1,59 @@
+query MyQuery {
+  checkoutProfiles(first: 10) {
+    nodes {
+      createdAt
+      editedAt
+      id
+      isPublished
+      name
+      typOspPagesActive
+      updatedAt
+    }
+  }
+}
+
+mutation MyMutation {
+  checkoutBrandingUpsert(
+    checkoutProfileId: "gid://shopify/CheckoutProfile/23593118"
+    checkoutBrandingInput: {customizations: {cartLink: {visibility: HIDDEN}, header: {padding: LARGE_500, divided: true, cartLink: {contentType: IMAGE, image: {mediaImageId: "gid://shopify/MediaImage/31529210937502"}}, colorScheme: COLOR_SCHEME1, alignment: CENTER}, headingLevel1: {typography: {size: EXTRA_EXTRA_LARGE, weight: BASE, letterCase: TITLE, kerning: BASE, font: SECONDARY}}, buyerJourney: {visibility: HIDDEN}, content: {divider: {visibility: VISIBLE}}, control: {}, expressCheckout: {}, favicon: {}, footer: {padding: LARGE_100, position: END, divided: true, content: {visibility: VISIBLE}, alignment: CENTER}, orderSummary: {colorScheme: COLOR_SCHEME2}, global: {typography: {letterCase: TITLE, kerning: BASE}}}, designSystem: {}}
+  ) {
+    checkoutBranding {
+      designSystem {
+        colors {
+          global {
+            accent
+            brand
+            critical
+            decorative
+            info
+            success
+            warning
+          }
+        }
+        cornerRadius {
+          base
+          large
+          small
+        }
+      }
+      customizations {
+        header {
+          cartLink {
+            contentType
+            image {
+              altText
+              height
+              id
+              src
+            }
+          }
+        }
+      }
+    }
+    userErrors {
+      code
+      field
+      message
+    }
+  }
+}
