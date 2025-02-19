@@ -131,4 +131,213 @@
 
 
 </script>
+<script>
+// List of URL substrings to check against the request URL
+window.mgCurrncyTargetUrlPatterns=[
+    'cart.js', '?page=', 'search?', 'view=', 'type=',
+    'change.js', 'add.js', 'recently-viewed',
+    'recentlyviewed', '/recommendation', 'change',"add","graphql.json","update.js","update"
+]
+class CurrencyConverter {
+    constructor() {
+        this.cacheKey = "hw_shopify_user_country";
+        this.cacheTimeKey = "hw_shopify_user_country_time";
+        this.cacheExpiration = 30 * 60 * 1000; // 30 minutes
+        this.SPECIAL_CURRENCIES = {
+            "AE": "AED",
+            "BH": "BHD",
+            "KW": "KWD",
+            "OM": "OMR",
+            "QA": "QAR",
+            "SA": "SAR",
+        };
+        this.storeCurrency = window.Shopify?.currency?.active || "AED";
 
+        this.init();
+    }
+
+    init() {
+        this.loadCurrencyConverter();
+        this.setupEventListeners();
+        this.checkSelectedURLChange()
+    }
+    checkSelectedURLChange(){
+         // Backup the original XMLHttpRequest send method
+    const originalSend = XMLHttpRequest.prototype.send;
+  
+    // Override XMLHttpRequest's send method to globally handle specific API calls
+    XMLHttpRequest.prototype.send = function () {
+      // Attach a listener for when the request loads (completes successfully)
+      this.addEventListener('load', function () {
+        console.log('Global XMLHttpRequest handler triggered for URL:', this._url);
+  
+  
+  
+        // Check if the current request URL matches any of the target patterns
+        const isTargetRequest = window.mgCurrncyTargetUrlPatterns.some(pattern => this._url.includes(pattern));
+  
+        if (isTargetRequest) {
+          // Delay execution to ensure any asynchronous data is ready
+          setTimeout(() => {
+            console.log('Handled XMLHttpRequest for target API:', this._url);
+          }, 300); // Delay of 300ms
+        }
+      });
+  
+      // Call the original send method with the original arguments
+      return originalSend.apply(this, arguments);
+    };
+  
+    // Backup the original fetch function
+    const originalFetch = window.fetch;
+  
+    // Override the global fetch method to monitor specific API calls
+    window.fetch = function (...fetchArgs) {
+      const requestUrl = fetchArgs[0]; // The first argument is the request URL
+  
+      // Call the original fetch and handle the response
+      return originalFetch.apply(this, fetchArgs).then(response => {
+        console.log('Fetch response object:', response);
+  
+        if (!response.ok) {
+          // If the response is not successful, return it as is
+          return response;
+        }
+  
+        try {
+          // Check if the response URL matches any target patterns
+          const isTargetResponse = window.mgCurrncyTargetUrlPatterns.some(pattern => response.url.includes(pattern));
+  
+          if (isTargetResponse) {
+            // Delay execution to handle any dependent asynchronous processes
+            setTimeout(() => {
+              console.log('Handled fetch response for target API:', response.url);
+            }, 300); // Delay of 300ms
+          }
+        } catch (error) {
+          console.warn('[shop_events_listener] Error handling fetch request:', error.message);
+        }
+  
+        return response;
+      });
+    };
+    }
+    extractNumericPrice(priceString) {
+        if (!priceString) return 0;
+        return parseFloat(priceString.replace(/[^\d]/g, '')) || 0;
+    }
+
+    async getUserCountry(manualCountry = undefined) {
+        try {
+            if (manualCountry) {
+                localStorage.setItem(this.cacheKey, manualCountry);
+                localStorage.setItem(this.cacheTimeKey, Date.now());
+                return manualCountry;
+            }
+
+            const cachedCountry = localStorage.getItem(this.cacheKey);
+            const cachedTime = localStorage.getItem(this.cacheTimeKey);
+
+            if (cachedCountry && cachedTime && (Date.now() - cachedTime < this.cacheExpiration)) {
+                return cachedCountry;
+            }
+
+            const response = await fetch(`${window.Shopify.routes.root}browsing_context_suggestions.json?country[enabled]=true`);
+            const data = await response.json();
+
+            if (data?.detected_values?.country?.handle) {
+                localStorage.setItem(this.cacheKey, data.detected_values.country.handle);
+                localStorage.setItem(this.cacheTimeKey, Date.now());
+                return data.detected_values.country.handle;
+            }
+        } catch (error) {
+            console.error("Error fetching user country:", error);
+        }
+        return "USD"; // Default fallback
+    }
+
+    convertCurrency(amount, fromCurrency, toCurrency) {
+        if (typeof Currency !== "undefined" && Currency?.convert) {
+            const convertedAmount = Currency.convert(amount, fromCurrency, toCurrency);
+            if (convertedAmount >= 0) {
+                return { convertedAmount: Math.round(convertedAmount), convertedCurrency: toCurrency };
+            }
+        }
+        console.warn("Currency.convert is not available. Using fallback.");
+        return { convertedAmount: amount, convertedCurrency: fromCurrency };
+    }
+
+    async updatePricesWithRules(manualCountry = undefined) {
+        try {
+            let userCountry = await this.getUserCountry(manualCountry);
+            let targetCurrency = this.SPECIAL_CURRENCIES[userCountry] || "USD";
+
+            document.querySelectorAll('span.money').forEach(priceElement => {
+                const getStoreCurrencyAmount = priceElement.getAttribute(`data-currency-${this.storeCurrency.toLowerCase()}`);
+                let originalPrice = getStoreCurrencyAmount
+                    ? this.extractNumericPrice(getStoreCurrencyAmount)
+                    : this.extractNumericPrice(priceElement.innerHTML);
+
+                if (isNaN(originalPrice)) return;
+
+                let { convertedAmount, convertedCurrency } = this.convertCurrency(originalPrice, this.storeCurrency, targetCurrency);
+                priceElement.innerHTML = this.formatCurrency(convertedAmount, convertedCurrency);
+                priceElement.setAttribute(`data-currency`, targetCurrency);
+                priceElement.setAttribute(`data-converted-currency`, `${convertedCurrency} ${convertedAmount}`);
+                
+                if (!getStoreCurrencyAmount) {
+                    priceElement.setAttribute(`data-currency-${this.storeCurrency.toLowerCase()}`, `${this.storeCurrency} ${originalPrice}`);
+                }
+            });
+        } catch (error) {
+            console.error("Error updating prices:", error);
+        }
+    }
+
+    formatCurrency(amount, currency) {
+        const currencyFormat = {
+            "BHD": `${amount} ${currency}`,
+            "USD": `$${amount} ${currency}`,
+            "AED": `${currency} ${amount}`,
+            "KWD": `${amount} ${currency}`,
+            "OMR": `${amount} ${currency}`,
+            "QAR": `${currency} ${amount}`,
+            "SAR": `${amount} ${currency}`
+        };
+        return currencyFormat[currency] || `${currency} ${amount}`;
+    }
+
+    loadCurrencyConverter(currency = undefined) {
+        this.updatePricesWithRules(currency);
+    }
+
+    setupEventListeners() {
+        document.addEventListener('change', async (event) => {
+            if (event.target.classList.contains('country-check')) {
+                let selectedCurrency = event.target.getAttribute('data-currency');
+                this.loadCurrencyConverter(selectedCurrency);
+            }
+        });
+
+        document.addEventListener("DOMContentLoaded", async () => {
+            await this.setCheckedCurrency();
+        });
+    }
+
+    async setCheckedCurrency() {
+        let currencyToCheck = await this.getUserCountry();
+        if (!this.SPECIAL_CURRENCIES.hasOwnProperty(currencyToCheck)) {
+            currencyToCheck = "US";
+        }
+
+        document.querySelectorAll('.country-check').forEach((radio) => {
+            if (radio.getAttribute('data-currency') === currencyToCheck) {
+                radio.checked = true;
+            }
+        });
+    }
+}
+
+// Initialize the class
+new CurrencyConverter();
+</sctipt>
