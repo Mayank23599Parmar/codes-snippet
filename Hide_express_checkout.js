@@ -50,3 +50,18 @@ export function run(input) {
   }
   return NO_CHANGES
 }
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  Enable patament custimization function mutation 
+================================================================================================
+  mutation {
+  paymentCustomizationCreate(
+    paymentCustomization: {title: "Hide Payment Mehod, enabled: true, functionId: "xxxxxxxxxxxxxxxxxxxxxxxxxxx"}
+  ) {
+    paymentCustomization {
+      id
+    }
+    userErrors {
+      message
+    }
+  }
+}
