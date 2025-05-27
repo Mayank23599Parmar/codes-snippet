@@ -1,0 +1,130 @@
+✅ Deploy Static Website on AWS (S3 + CloudFront + Route 53 + ACM)
+🔹 1. Create S3 Bucket (mvrc.fun)
+1.1. Bucket Setup
+Bucket name: mvrc.fun
+
+Region: Any (e.g., us-east-1 is fine)
+
+1.2. Enable Static Website Hosting
+Go to Properties > Static website hosting
+
+Choose: Enable
+
+Hosting type: Host a static website
+
+Set Index document: index.html
+
+(Optional) Set error document: error.html
+
+1.3. Set Bucket Policy for Public Access (if not using OAC)
+json
+Copy
+Edit
+{
+  "Version": "2012-10-17",
+  "Id": "PolicyForStaticSite",
+  "Statement": [
+    {
+      "Sid": "PublicReadAccess",
+      "Effect": "Allow",
+      "Principal": "*",
+      "Action": "s3:GetObject",
+      "Resource": "arn:aws:s3:::mvrc.fun/*"
+    }
+  ]
+}
+⚠️ Only use this if you're not using CloudFront OAC.
+
+🔹 2. Create ACM Certificate
+Required for HTTPS with your custom domain via CloudFront
+
+2.1. Go to AWS Certificate Manager (ACM)
+Region: ✅ us-east-1 (N. Virginia) – must be this region for CloudFront
+
+2.2. Request Public Certificate
+Add domain names:
+
+mvrc.fun
+
+www.mvrc.fun
+
+Validation method: DNS validation
+
+Copy CNAME records shown
+
+🔹 3. Configure Route 53
+3.1. Add Hosted Zone (if not already)
+Go to Route 53 > Hosted Zones
+
+Create a Hosted Zone: mvrc.fun
+
+3.2. Add DNS Records for Certificate Validation
+Paste CNAME records (from ACM) into Route 53
+
+Wait for ACM to show ✅ Issued
+
+3.3. Update Domain Registrar
+If domain was bought outside AWS, go to your registrar (e.g., GoDaddy, Namecheap)
+
+Replace their nameservers with the ones shown in your Route 53 Hosted Zone
+
+🔹 4. Create CloudFront Distribution
+4.1. Go to CloudFront > Create Distribution
+4.2. Origin Settings
+Origin domain: Use the S3 Website endpoint
+(e.g., mvrc.fun.s3-website-us-east-1.amazonaws.com)
+
+Origin Access Control (OAC): Optional if you use public S3 policy
+
+4.3. Viewer Settings
+Viewer protocol policy: Redirect HTTP to HTTPS
+
+4.4. Alternate Domain Names (CNAMEs)
+Add:
+
+mvrc.fun
+
+www.mvrc.fun
+
+4.5. SSL Certificate
+Choose the ACM certificate issued for mvrc.fun and www.mvrc.fun in us-east-1
+
+4.6. (Optional) Configure custom error pages, TTL, etc.
+4.7. Create distribution and wait ~10 minutes for deployment
+🔹 5. Configure Route 53 for CloudFront
+5.1. Create Record for mvrc.fun
+Record type: A
+
+Alias: ✅ Yes
+
+Alias Target: your CloudFront distribution
+
+5.2. Create Record for www.mvrc.fun
+Same as above
+
+(Optional) point it to a separate CloudFront redirect, or to the same distribution as mvrc.fun
+
+🔄 (Optional) Redirect www.mvrc.fun → mvrc.fun
+If you want to redirect all traffic from www.mvrc.fun to mvrc.fun, create:
+
+🔁 S3 Redirect Bucket:
+Bucket name: www.mvrc.fun
+
+Enable static website hosting (Redirect requests)
+
+Target: mvrc.fun
+
+Protocol: https
+
+Set up a CloudFront distribution for this bucket
+
+✅ Final Checklist
+Task	Done?
+S3 bucket mvrc.fun created and public or with OAC	✅
+Static website hosting enabled	✅
+ACM cert in us-east-1 for both domains	✅
+Route 53 hosted zone configured	✅
+CloudFront distribution with alt domains + cert	✅
+A records in Route 53 for both root and www	✅
+(Optional) www redirect via S3 + CloudFront	✅
+
