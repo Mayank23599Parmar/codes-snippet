@@ -1,0 +1,63 @@
+# ✅ MongoDB EC2 to MongoDB Atlas Migration Checklist
+
+## 📍 Goal:
+Migrate a specific database from local MongoDB on EC2 to MongoDB Atlas, safely and without deleting any local data.
+
+---
+
+## ✅ STEP 1: Install MongoDB Tools (on EC2)
+
+1. Run the following commands:
+   wget -qO - https://www.mongodb.org/static/pgp/server-6.0.asc | sudo apt-key add -
+   echo "deb [ arch=amd64 ] https://repo.mongodb.org/apt/ubuntu focal/mongodb-org/6.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-6.0.list
+   sudo apt update
+   sudo apt install -y mongodb-database-tools
+
+---
+
+## ✅ STEP 2: Dump the Specific Database from Local MongoDB
+
+1. Replace <your_db_name> with the name of the local database:
+   mongodump --uri="mongodb://localhost:27017" --db=<your_db_name> --out=/tmp/mongo_backup
+
+2. Verify that the folder /tmp/mongo_backup/<your_db_name> is created.
+
+3. Note: This does NOT delete or change local data.
+
+---
+
+## ✅ STEP 3: Restore the Dump into MongoDB Atlas
+
+1. Replace <username>, <password>, <cluster-url>, and <your_db_name> in the command below:
+   mongorestore --uri="mongodb+srv://<username>:<password>@<cluster-url>/<your_db_name>" /tmp/mongo_backup/<your_db_name>
+
+2. Do NOT use --drop unless you want to remove existing data in Atlas.
+
+---
+
+## ✅ STEP 4: (Optional) Use GZIP Compression for Large Databases
+
+### a) Dump as compressed archive:
+   mongodump --uri="mongodb://localhost:27017" --db=<your_db_name> --archive=/tmp/<your_db_name>.gz --gzip
+
+### b) Restore from compressed archive:
+   mongorestore --uri="mongodb+srv://<username>:<password>@<cluster-url>/<your_db_name>" --archive=/tmp/<your_db_name>.gz --gzip
+
+---
+
+## ✅ STEP 5: Verify the Data in MongoDB Atlas
+
+### a) Option 1: Use MongoDB Atlas Web UI
+- Go to your cluster → Browse Collections → Check if data is present.
+
+### b) Option 2: Use Mongo Shell (mongosh)
+   mongosh "mongodb+srv://<username>:<password>@<cluster-url>/<your_db_name>"
+
+   # Inside shell:
+   use <your_db_name>
+   show collections
+   db.<collection_name>.find().pretty()
+
+---
+
+# ✅ SUCCESS: Migration completed. Local MongoDB data remains untouched.
