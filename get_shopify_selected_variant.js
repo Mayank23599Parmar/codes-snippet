@@ -1,3 +1,53 @@
+function getMobileOS() {
+  const uA = navigator.userAgent || navigator.vendor || window.opera || '';
+  const platform = navigator.platform || '';
+  const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
+  // iOS detection
+  if (
+    (/iPhone|iPad|iPod/.test(uA) || /iPhone|iPad|iPod/.test(platform)) && 
+    !/Windows Phone/.test(uA) && 
+    !window.MSStream
+  ) {
+    return 'iOS';
+  }
+  
+  // Additional iOS check for iPads reporting as Mac
+  if (
+    uA.includes('Macintosh') && 
+    isTouchDevice && 
+    !/Windows/.test(uA)
+  ) {
+    return 'iOS';
+  }
+
+  // Android detection
+  if (/Android/.test(uA) || /Android/.test(platform)) {
+    return 'Android';
+  }
+
+  // Windows Mobile/Tablet detection
+  if (/Windows Phone|Windows NT/.test(uA) && isTouchDevice) {
+    return 'Windows';
+  }
+
+  // Fallback for other or unknown devices
+  return 'other';
+}
+
+function isWeekend() {
+  const today = new Date();
+  const day = today.getDay();
+  return day === 0 || day === 6; // 0 = Sunday, 6 = Saturday
+}
+
+ /**
+ * =================================================================================
+ * Universal Shopify Variant Change Listener
+ * This script works on ANY theme because it watches the one input field
+ * that Shopify requires for adding a product to the cart.
+ * =================================================================================
+ */
 /**
  * =================================================================================
  * Universal Shopify Variant & Quick View Listener v2.0
@@ -14,10 +64,19 @@
  * `initializeVariantListener()` on that new form.
  * =================================================================================
  */
+
 document.addEventListener('DOMContentLoaded', () => {
   const YOUR_CUSTOM_LOGIC = (newVariantId, formElement) => {
-    console.log('✅ Variant Changed! New ID:', newVariantId);
-    console.log('On Form:', formElement);
+    const productID=formElement?.querySelector('input[name="product-id"]')?.value;
+    debugger
+    if(productID){
+    const varaintData=JSON.parse(document.querySelector(`.test-variant-${productID}`)?.innerText)
+
+    if(varaintData){
+    console.log(varaintData[newVariantId])
+    }
+    }
+    {% comment %} console.log(newVariantId,productID) {% endcomment %}
     
     // ==================================================
     // ✨ YOUR CUSTOM GLOBAL LOGIC GOES HERE ✨
@@ -41,8 +100,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Check if a listener has already been attached to prevent duplicates.
     if (productForm.dataset.variantListenerAttached) return;
     productForm.dataset.variantListenerAttached = 'true';
+    
 
-    console.log('Attaching listener to form:', productForm);
 
     const observer = new MutationObserver((mutationsList) => {
       for (const mutation of mutationsList) {
@@ -56,6 +115,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initial call for the pre-selected variant.
     if (variantInput.value) {
+  
       YOUR_CUSTOM_LOGIC(variantInput.value, productForm);
     }
   };
@@ -84,3 +144,24 @@ document.addEventListener('DOMContentLoaded', () => {
     subtree: true    // Watch all descendants of the body.
   });
 });
+
+// Liquid code 
+
+{%- assign variant_metafields_json = '{' -%}
+{%- for variant in product.variants -%}
+  {%- assign rule_data = variant.metafields.dynamic_price.rule_data.value | json -%}
+  {%- assign variant_id = variant.id -%}
+  {%- assign inventory_quantity = variant.inventory_quantity | default: 0 -%}
+  {%- assign price = variant.price | money | json -%}
+  {%- assign compare_at_price = variant.compare_at_price | default: null | money | json -%}
+  {%- assign variant_data = '{"rule_data":' | append: rule_data | append: ',"inventory_quantity":' | append: inventory_quantity | append: ',"price":' | append: price | append: ',"compare_at_price":' | append: compare_at_price | append: '}' -%}
+  {%- assign variant_metafields_json = variant_metafields_json | append: '"' | append: variant_id | append: '":' | append: variant_data -%}
+  {%- unless forloop.last -%}
+    {%- assign variant_metafields_json = variant_metafields_json | append: ',' -%}
+  {%- endunless -%}
+{%- endfor -%}
+{%- assign variant_metafields_json = variant_metafields_json | append: '}' -%}
+
+<script class="test-variant-{{  product.id }}">
+{{ variant_metafields_json  }}
+</script>
