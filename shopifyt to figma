@@ -23,7 +23,10 @@
   }
 }
 
+1. npm install -g figma-developer-mcp
+2. open figam desktop and go to prefence and enable figam server
 ==================== curesor rule .cursor/rule/shopify-theme.instruction.md =======================================
+
 
 ---
 description: |
