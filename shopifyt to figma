@@ -1,0 +1,188 @@
+{
+  "mcpServers": {
+    "shopify-dev-mcp": {
+      "command": "cmd",
+      "args": ["/k", "npx", "-y", "@shopify/dev-mcp@latest"],
+	  "env": {
+        "POLARIS_UNIFIED": "true",
+		"LIQUID": "true",
+        "LIQUID_VALIDATION_MODE": "full",    // or "full" for validating entire themes // "partial" for per-file validation.
+		"OPT_OUT_INSTRUMENTATION": "true"
+      }
+    },
+    "my-mcp-server-4e98f0b6": {
+			"type": "stdio",
+			"command": "npx",
+			"args": [
+				"-y",
+				"figma-developer-mcp",
+				"--figma-api-key=XXXXX",
+				"--stdio"
+			]
+		}
+  }
+}
+
+==================== curesor rule .cursor/rule/shopify-theme.instruction.md =======================================
+
+---
+description: |
+  Base rules for Shopify OS 2.0 theme development inside Cursor.
+  Enforces pixel-perfect Figma translations while strictly reusing the project’s
+  existing CSS/HTML/JS structure. Swiper is the standard for sliders.
+  No arbitrary new HTML classes; section-scoped CSS overrides only.
+  Templates JSON are read-only. Adds Shopify-native logic for:
+  section rendering via JS, newsletter AJAX, full AJAX cart (add/update/remove),
+  standard product page UI, and customer login/register flows using existing modules.
+
+globs:
+  - /sections/*.liquid
+  - /snippets/*.liquid
+  - /assets/*.css
+  - /assets/*.js
+  - /assets/swiper*.css
+  - /assets/swiper*.js
+  - /templates/*.json
+  - /config/settings_schema.json
+
+alwaysApply: false
+---
+## ROLE & GOAL
+- Principal Shopify Engineer & UI/UX Specialist.
+- Translate Figma Dev Mode specs → **pixel-perfect, performant OS2.0 code**.
+
+## CORE DIRECTIVES
+1. Pixel-perfect translation (no creative interpretation).
+2. **Strict class reuse (NO new HTML classes)**:
+   - Always search `/assets/base.css` and `/assets/style.css` for existing classes and use them.
+   - If minor adjustments are needed, add **section-scoped overrides** only: `#{{ section.id }} .existing-class { ... }`
+3. **Use existing project code & structure:** reuse snippets/partials and established HTML patterns.
+5. Don’t create README or other docs.
+6. OS 2.0 Liquid logic: blocks, metafields, loops; handle empty states.
+7. Best practices: mobile-first, accessible, performant (Lighthouse ≥ 90).
+8. **Responsive when Figma lacks breakpoints:** implement behavior that preserves the design intent using existing utilities—don’t invent new styles.
+
+## EXISTING JS MODULES (MUST REUSE)
+- Core: `global.js`, `pubsub.js`
+- Cart: `cart.js`, `cart-drawer.js`, `cart-notification.js`, `quick-add.js`, `quick-order-list.js`
+- Product: `product-form.js`, `product-info.js`, `product-modal.js`, `product-model.js`, `media-gallery.js`, `price-per-item.js`, `pickup-availability.js`, `magnify.js`, `share.js`
+- Collection/Search: `facets.js`, `predictive-search.js`, `main-search.js`, `search-form.js`, `show-more.js`
+- UI: `details-disclosure.js`, `details-modal.js`, `quantity-popover.js`, `password-modal.js`
+- Customer: `customer.js`
+- **Swiper**: vendor files under `/assets/swiper*` (use if present; otherwise add pinned vendor files per project convention)
+
+## SHOPIFY SECTION RENDERING (AJAX, REQUIRED)
+- Use Shopify’s **Section Rendering API** to update parts of the page without reload.
+- When UI state changes (cart, pagination, filters, etc.), **fetch updated sections** and replace DOM nodes.
+- **Theme Editor lifecycle support**:
+  - Initialize on `DOMContentLoaded` and `shopify:section:load`
+  - Cleanup on `shopify:section:unload`
+  - Handle `shopify:block:select` / `shopify:block:deselect` where relevant.
+- **Bundled rendering**: when using cart API, include `sections` in request (if supported in your theme) to receive updated HTML in a single response.
+  - Emit: `section:render:start`, `section:render:done`, `cart:request:start`, `cart:updated`, `cart:error`
+  - Listen in dependent modules to refresh UI consistently.
+
+## AJAX CART (ADD / UPDATE / REMOVE) — NO FULL PAGE RELOAD
+- **Add to cart**: handled by `product-form.js` → calls into `cart.js`.
+  - Endpoint: `POST /cart/add.js`
+  - On success: request **updated sections** (e.g., `cart-drawer`, `cart-icon-bubble`, `cart-items`, `cart-footer`) and replace DOM.
+  - Announce via `cart-notification.js` or open `cart-drawer.js` as per theme setting.
+- **Update quantities**: `POST /cart/change.js` (or `update.js` pattern in `cart.js`).
+  - Keep UI in sync by re-rendering necessary sections (same list as above).
+  - Disable loop/navigation in Swiper if cart has 1 slide (edge case).
+- **Remove item**: same as change (`quantity: 0`), then re-render sections.
+- **Concurrency & errors**:
+  - Queue requests in `cart.js` to avoid clobbering.
+  - On error, show message via `cart-notification.js`; do not leave UI desynced.
+- **Drawer vs page**:
+  - If cart drawer exists, prefer it for feedback; else update cart page sections.
+- **Events**: always emit `cart:updated` after successful sync for other modules.
+
+## PRODUCT PAGE UI (STANDARD SHOPIFY BEHAVIOR)
+- **Liquid**: use `{% form 'product', product %}` with proper variant inputs and quantity.
+- **JS modules**:
+  - `product-form.js`: intercept submit → AJAX add; disable button while pending; handle selling plan if present.
+  - `product-info.js`: update price, SKU, inventory, badges on variant change; honor back-in-stock states.
+  - `media-gallery.js` + **Swiper** (if design requires): sync gallery with selected variant media; support zoom/magnify if present.
+  - `product-modal.js` / `product-model.js`: modals & 3D viewer; pause when offscreen; respect prefers-reduced-motion.
+  - `pickup-availability.js`: update pickup widget on variant change.
+  - `quantity-popover.js`: consistent quantity control behavior.
+- **Edge cases**: no variant selected, out-of-stock, selling plans, very long titles, mixed media ratios, slow image loads (no layout shift).
+
+## NEWSLETTER FORM (AJAX)
+- Use existing newsletter form pattern; submit via `fetch` to the store’s newsletter endpoint (e.g., `/contact#newsletter` or dedicated endpoint if theme uses one).
+- Show success/validation messages inline; don’t reload the page.
+- Prevent double-submit; debounce and handle network errors gracefully.
+- Respect accessibility (focus management, ARIA live region announcements).
+
+## CUSTOMER LOGIN / REGISTER (STANDARD)
+- **Liquid forms**:
+  - Login: `{% form 'customer_login' %}` with `customer[email]`, `customer[password]`.
+  - Register: `{% form 'create_customer' %}` with `customer[first_name]`, `customer[last_name]`, `customer[email]`, `customer[password]`.
+- **JS**: handled by `customer.js`
+  - Validate required inputs; show inline errors from `form.errors`.
+  - Toggle states (login ↔ register, forgot password).
+  - Support redirect-on-success if specified (query param or data-attr).
+  - No full page reloads for pure UI state changes; rely on progressive enhancement.
+
+## SWIPER AS STANDARD SLIDER
+- **Only new classes allowed**: Swiper structure:
+  `.swiper`, `.swiper-wrapper`, `.swiper-slide`,
+  optional `.swiper-pagination`, `.swiper-button-next`, `.swiper-button-prev`, `.swiper-scrollbar`.
+- Use existing project classes for surrounding layout/styling; **Swiper classes only for structure**.
+- Suggested options (tune to Figma):
+  - `a11y: true`, `keyboard.enabled: true`, `watchOverflow: true`, `centerInsufficientSlides: true`
+  - Breakpoints for `slidesPerView`/`spaceBetween`
+  - Optional `lazy`, `loop` (disable when only 1 slide)
+- Theme Editor: init/destroy on section events; support multiple instances per page.
+
+## JS & STYLE BUNDLING (SHOPIFY-NATIVE)
+- Prefer `{% javascript %}` / `{% stylesheet %}` when the project uses them (1 per file; concatenated & deferred).
+- Otherwise follow the project’s assets pipeline; ensure scripts are `defer`/`async`.
+- Use **data-attributes** for per-instance options; don’t parse Liquid inside bundling tags.
+
+## PERFORMANCE
+- Minimize JS; prefer HTML/CSS first; progressive enhancement.
+- No parser-blocking scripts; preload sparingly (only critical assets).
+- **Images**: responsive `image_url` + `image_tag` with `sizes/srcset`; lazy-load below the fold; do **not** lazy-load LCP.
+- Use Shopify CDN via `/assets`; avoid redundant downloads.
+- Avoid heavy Liquid in loops; run Theme Check; profile with Theme Inspector.
+- Lighthouse (mobile) ≥ 90 across Performance/Accessibility/BP.
+
+## ACCESSIBILITY
+- Keyboard: visible focus, logical tab order; Enter/Space controls; Esc closes overlays; return focus correctly.
+- Headings: proper `h1–h6`; nav landmarks; `aria-current` where applicable.
+- Live regions: announce cart updates, price changes, form errors.
+- Forms: label/`aria-describedby`/required states; clear error summaries.
+- Media: no autoplay with sound; captions; 44×44px touch targets for primary controls.
+
+## CSS & OVERRIDES ENFORCEMENT
+- **Allowed:** reuse existing classes; section-scoped overrides under `#{{ section.id }}`; Swiper structural classes; existing CSS variables.
+- **Forbidden:** arbitrary new HTML classes; new global utilities/variables; editing `/templates/*.json`; new docs.
+- **Auto-fix:** replace invented classes with existing ones; move extra declarations into `#{{ section.id }}` overrides.
+
+## WORKFLOW
+1) Review project utilities/components/snippets/JS (incl. Swiper patterns).  
+2) Extract exact Figma specs (no summaries).  
+3) List **existing classes/snippets/JS modules** to reuse; plan Swiper options if needed.  
+4) Implement; ensure **no new class names** (except Swiper structure) and reuse **cart.js/product-form.js/customer.js** flows.  
+5) QA: pixel parity, no CLS, smooth interaction, editor lifecycle OK, Lighthouse ≥ 90.
+
+## TASK TEMPLATE
+- Section Name
+- File Path
+- Description
+- Figma Dev Mode Specs (layout, spacing, typography, colors, breakpoints, assets)
+- **Existing Classes/Snippets/JS to Reuse**  
+  - CSS selectors (from base.css/style.css)  
+  - Snippets/partials  
+  - JS modules (e.g., `product-form.js`, `cart.js`, `cart-drawer.js`, `customer.js`)
+- **Shopify Section Rendering Targets** (IDs/handles to refresh on state change)
+- **AJAX Cart Behavior** (add/update/remove; which sections to re-render; drawer vs notification)
+- **Swiper Options** (per-breakpoint `slidesPerView`, `spaceBetween`, `loop`, `autoplay`, `navigation/pagination`)
+- Customizable Fields (schema)
+- Liquid Data Sources
+- Edge Cases & Empty States (0/1 slide, OOS variants, server errors)
+- Accessibility Notes (focus management, ARIA live regions)
+- Performance Notes (sizes/srcset, lazy below fold, preloads)
+- Responsive Notes (if Figma lacks mobile/tablet)
