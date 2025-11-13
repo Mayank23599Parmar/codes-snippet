@@ -47,3 +47,11 @@ window.open = function(url, name, specs) {
 if (window !== window.top) {
   // Same override logic for iframes – repeat the above if your site uses them
 }
+
+======================================================
+BrowserDesktopAndroid/iOS MobileNotesChromeFull (v102+)Full (Android v142+)
+No (iOS – uses WebKit/Safari)Current: v143–145. Excellent for most users.EdgeFull (v102+)Full (v142+)Chromium-based; same as Chrome.FirefoxPartial (v147+)NoDesktop: Recent versions only. Android lags.SafariNoNo (iOS v18.6+)WebKit blocks full overrides in some cases; use CSP headers as backup. Tech Preview may add soon.OperaFull (v88+)Full (v80+)Chromium-based.Samsung InternetFull (v20+)FullAndroid-only; Chromium.
+
+Global Coverage: ~85–90% of users (mostly Chrome/Firefox desktop/mobile). Safari/iOS users (~20% market) get partial via fallbacks.
+Old Browsers (e.g., IE11): Limited—only click/form hooks work; no Nav API or easy overrides.
+Testing Tip: Use BrowserStack or real devices. For iOS/Safari, the window.open and link blocks still catch 80% of cases.
