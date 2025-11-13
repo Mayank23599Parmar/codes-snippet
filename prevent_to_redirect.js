@@ -1,7 +1,7 @@
-// Your domain (adjust if needed, e.g., for subdomains)
+// Your domain (adjust for subdomains, e.g., 'example.com')
 const allowedDomain = window.location.hostname;
 
-// 1. Navigation API for same-tab navigations (original script)
+// 1. Navigation API for same-tab navigations (including most <a> clicks)
 if ('navigation' in window) {
   const navigation = window.navigation;
 
@@ -12,22 +12,21 @@ if ('navigation' in window) {
     if (isExternal) {
       console.warn('Blocked external navigation to:', destinationUrl.href);  // Optional
       event.preventDefault();
-      alert('Navigation blocked for security reasons.');  // Customize or remove
+      alert('Navigation blocked for security reasons.');  // Customize/remove
       return;
     }
   });
 } else {
-  console.warn('Navigation API not supported – using fallbacks');
+  console.warn('Navigation API not supported – relying on fallbacks');
 }
 
-// 2. Override window.open to block external popups/new tabs
+// 2. Override window.open for popups/new tabs
 const originalOpen = window.open;
 window.open = function(url, name, specs) {
-  // Handle relative URLs
   if (url && !url.startsWith('http')) {
     url = new URL(url, window.location.origin).href;
   } else if (url) {
-    url = new URL(url).href;  // Absolute
+    url = new URL(url).href;
   }
 
   const targetUrl = new URL(url || window.location.href);
@@ -35,19 +34,43 @@ window.open = function(url, name, specs) {
 
   if (isExternal) {
     console.warn('Blocked external window.open to:', targetUrl.href);  // Optional
-    alert('Popup blocked for security reasons.');  // Customize or remove
-    return null;  // Returns null instead of the new window
+    alert('Popup blocked for security reasons.');  // Customize/remove
+    return null;
   }
 
-  // Allow internal: Call original
   return originalOpen.call(this, url, name, specs);
 };
 
-// 3. Bonus: Block window.open in iframes or other contexts (if needed)
-if (window !== window.top) {
-  // Same override logic for iframes – repeat the above if your site uses them
-}
+// 3. Block external <a> href clicks (covers _blank, same-tab, and dynamic links)
+document.addEventListener('click', (e) => {
+  // Check if the clicked element is an <a> tag (or inside one)
+  let link = e.target.closest('a');
+  if (!link || !link.href) return;  // Not a link? Bail
 
+  // Parse href (handles relative like './page.html')
+  const url = new URL(link.href, window.location.origin);
+  const isExternal = url.hostname !== allowedDomain;
+
+  if (isExternal) {
+    console.warn('Blocked external link click to:', url.href);  // Optional
+    e.preventDefault();  // Stops the navigation/popup
+    e.stopPropagation(); // Prevents bubbling if needed
+    alert('External link blocked for security.');  // Customize/remove
+  }
+}, true);  // Capture phase: Intercepts early, before other handlers
+
+// 4. Bonus: Block external form submits (if forms POST to other sites)
+document.addEventListener('submit', (e) => {
+  if (e.target.tagName === 'FORM') {
+    const action = new URL(e.target.action || window.location.href, window.location.origin);
+    const isExternal = action.hostname !== allowedDomain;
+
+    if (isExternal) {
+      e.preventDefault();
+      alert('External form submit blocked.');
+    }
+  }
+}, true);
 ======================================================
 BrowserDesktopAndroid/iOS MobileNotesChromeFull (v102+)Full (Android v142+)
 No (iOS – uses WebKit/Safari)Current: v143–145. Excellent for most users.EdgeFull (v102+)Full (v142+)Chromium-based; same as Chrome.FirefoxPartial (v147+)NoDesktop: Recent versions only. Android lags.SafariNoNo (iOS v18.6+)WebKit blocks full overrides in some cases; use CSP headers as backup. Tech Preview may add soon.OperaFull (v88+)Full (v80+)Chromium-based.Samsung InternetFull (v20+)FullAndroid-only; Chromium.
