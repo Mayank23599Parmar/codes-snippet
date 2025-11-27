@@ -1,22 +1,16 @@
 // Function to get cookie by name
-function getCookie(name) {
+function getCartTokenCookie(name) {
     let matches = document.cookie.match(new RegExp(
         "(?:^|; )" + name.replace(/([\.$?*|{}\(\)\[\]\\\/\+^])/g, '\\$1') + "=([^;]*)"
     ));
     return matches ? decodeURIComponent(matches[1]) : undefined;
 }
-
-// Get the cart ID from the cookie
-let cartToken = getCookie('cart');  // replace 'cart' with the actual cookie name
-
-if (cartToken) {
-    // Extract the cart ID without the key
-    let cartId = cartId.split('?')[0];
-    // Create the GID string
-    let gidCartId = `gid://shopify/Cart/${extractedCartId}`;
-    console.log('GID for Cart:', gidCartId);
-} else {
-    console.log('Cart ID not found in cookies');
+export const getcartId = () => {
+    const cartToken = getCartTokenCookie('cart');
+    if (cartToken) {
+            return `gid://shopify/Cart/${cartToken}`;
+    }
+    return null
 }
 
 const cartDiscountCodesUpdate=`mutation MyMutation {
