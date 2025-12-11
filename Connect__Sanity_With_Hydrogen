@@ -1,0 +1,147 @@
+Step 1 : # in the /web directory
+npm install hydrogen-sanity @sanity/client @portabletext/react
+
+Step 2:   add in web/vite.config.ts
+
+import {defineConfig} from 'vite'
+import {hydrogen} from '@shopify/hydrogen/vite'
+import {sanity} from 'hydrogen-sanity/vite'
+
+export default defineConfig({
+  plugins: [hydrogen(), sanity() /** ... */],
+  // ... other config
+})
+
+Step 3: web/.env
+# Project ID
+SANITY_PROJECT_ID=""
+# Dataset name
+SANITY_DATASET=""
+# (Optional) Sanity API version
+SANITY_API_VERSION=""
+
+Step 4: web/app/lib/context.ts
+import {createHydrogenContext} from '@shopify/hydrogen';
+import {createSanityContext, type SanityContext} from 'hydrogen-sanity';
+import {AppSession} from '~/lib/session';
+import {CART_QUERY_FRAGMENT} from '~/lib/fragments';
+
+// ...other types and imports
+
+declare global {
+  interface HydrogenAdditionalContext extends AdditionalContextType {
+    // Augment `HydrogenAdditionalContext` with the Sanity context
+    sanity: SanityContext;
+  }
+}
+
+/**
+ * Creates Hydrogen context for React Router 7.9.x
+ * Returns HydrogenRouterContextProvider with hybrid access patterns
+ * */
+export async function createHydrogenRouterContext(
+  request: Request,
+  env: Env,
+  executionContext: ExecutionContext,
+) {
+  // ...other functions
+
+  // 1. Add `sanity` configuration
+  const sanity = await createSanityContext({
+    request,
+
+    // To use the Hydrogen cache for queries
+    cache,
+    waitUntil,
+
+    // Sanity client configuration
+    client: {
+      projectId: env.SANITY_PROJECT_ID,
+      dataset: env.SANITY_DATASET || 'production',
+      apiVersion: env.SANITY_API_VERSION || 'v2025-11-01',
+      useCdn: process.env.NODE_ENV === 'production',
+    },
+  });
+
+  // 2. Make `sanity` available to loaders and actions in the request context
+  const hydrogenContext = createHydrogenContext(
+    {
+      env,
+      request,
+      cache,
+      waitUntil,
+      session,
+      // Or detect from URL path based on locale subpath, cookies, or any other strategy
+      i18n: {language: 'EN', country: 'US'},
+      cart: {
+        queryFragment: CART_QUERY_FRAGMENT,
+      },
+    },
+    {...additionalContext, sanity},
+  );
+
+  return hydrogenContext;
+}
+
+Step 5: use
+import {Link, useLoaderData, type LoaderFunctionArgs} from 'react-router';
+import {type Product} from '@shopify/hydrogen/storefront-api-types';
+import {PortableText, type PortableTextBlock} from '@portabletext/react';
+
+export async function loader({
+  params,
+  context: {storefront, sanity},
+}: LoaderFunctionArgs) {
+  const {product} = await storefront.query<{product: Product}>(
+    `#graphql
+      query Product($handle: String!) {
+        product(handle: $handle) { id title }
+      }
+    `,
+    {variables: params},
+  );
+
+  const PRODUCT_QUERY = `*[_type == "product" && store.slug.current == $handle][0]{
+    body,
+    "image": store.previewImageUrl
+  }`;
+
+  const initial = await sanity.fetch<{
+    body: PortableTextBlock[] | null;
+    image: string | null;
+  } | null>(PRODUCT_QUERY, params, {
+    tag: 'homepage',
+    hydrogen: {debug: {displayName: 'query Homepage'}},
+  });
+
+  if (!initial) {
+    throw new Response('Product not found', {status: 404});
+  }
+
+  return {product, initial};
+}
+
+export default function Product() {
+  const {product, initial} = useLoaderData<typeof loader>();
+
+  return (
+    <div className="mx-auto p-12 grid grid-cols-1 gap-4">
+      <h1 className="text-3xl font-bold">{product.title}</h1>
+      {initial?.image ? (
+        <img
+          alt={product.title}
+          src={initial.image}
+          className="size-32 mb-6 mr-6 object-cover float-left rounded-xl"
+        />
+      ) : null}
+      {Array.isArray(initial?.body) ? (
+        <PortableText value={initial.body} />
+      ) : null}
+      <Link className="text-blue-500" to="/collections/all">
+        &larr; Back to All Products
+      </Link>
+    </div>
+  );
+}
+
+
