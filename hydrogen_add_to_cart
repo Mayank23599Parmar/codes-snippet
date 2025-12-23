@@ -1,0 +1,142 @@
+import {CartForm} from '@shopify/hydrogen';
+import {useEffect, useRef} from 'react';
+
+/**
+ * Internal component to handle drawer opening logic
+ * Opens drawer only after add to cart operation completes (fetcher.state === 'idle')
+ */
+function AddToCartButtonInner({fetcher, onClick, isLoading, isDisabled, className, children, analytics}) {
+  const previousStateRef = useRef(fetcher.state);
+  const onClickRef = useRef(onClick);
+  const hasOpenedDrawerRef = useRef(false);
+
+  // Store onClick in ref to avoid dependency issues
+  useEffect(() => {
+    onClickRef.current = onClick;
+  }, [onClick]);
+
+  // Open drawer when add to cart operation completes
+  useEffect(() => {
+    const previousState = previousStateRef.current;
+    const currentState = fetcher.state;
+    
+    // Debug logging
+    console.log('[AddToCartButton] State transition:', {
+      previousState,
+      currentState,
+      hasOpenedDrawer: hasOpenedDrawerRef.current,
+      hasOnClick: !!onClickRef.current,
+    });
+    
+    // Only open drawer when state transitions from loading/submitting to idle
+    // This means the add to cart operation has completed
+    const wasLoading = previousState === 'submitting' || previousState === 'loading';
+    const isNowIdle = currentState === 'idle';
+    
+    // Open drawer only if:
+    // 1. We were previously loading/submitting (operation was in progress)
+    // 2. We're now idle (operation completed)
+    // 3. We haven't already opened the drawer for this operation
+    // 4. We have an onClick handler
+    if (wasLoading && isNowIdle && !hasOpenedDrawerRef.current && onClickRef.current) {
+      console.log('[AddToCartButton] Opening drawer!');
+      hasOpenedDrawerRef.current = true;
+      onClickRef.current();
+    }
+    
+    // Reset flag when starting a new operation (state becomes submitting/loading again)
+    if (currentState === 'submitting' || currentState === 'loading') {
+      hasOpenedDrawerRef.current = false;
+    }
+    
+    // Track previous state for next render (after all checks)
+    previousStateRef.current = currentState;
+  }, [fetcher.state]);
+
+  return (
+    <>
+      <input
+        name="analytics"
+        type="hidden"
+        value={JSON.stringify(analytics)}
+      />
+      <button
+        className={`button-slide-animate ${className} ${isLoading ? 'opacity-80 cursor-wait relative' : ''}`}
+        type="submit"
+        disabled={isDisabled}
+        aria-busy={isLoading}
+      >
+        {isLoading ? (
+          <span className="flex items-center justify-center gap-2">
+            <svg
+              className="animate-spin h-4 w-4"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              />
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              />
+            </svg>
+            <span>Adding...</span>
+          </span>
+        ) : (
+          children
+        )}
+      </button>
+    </>
+  );
+}
+
+/**
+ * @param {{
+ *   analytics?: unknown;
+ *   children: React.ReactNode;
+ *   disabled?: boolean;
+ *   lines: Array<OptimisticCartLineInput>;
+ *   onClick?: () => void;
+ * }}
+ */
+export function AddToCartButton({
+  analytics,
+  children,
+  disabled,
+  lines,
+  className,
+  onClick,
+}) {
+  return (
+    <CartForm route="/cart" inputs={{lines}} action={CartForm.ACTIONS.LinesAdd}>
+      {(fetcher) => {
+        const isLoading = fetcher.state === 'submitting' || fetcher.state === 'loading';
+        const isDisabled = disabled || isLoading;
+
+        return (
+          <AddToCartButtonInner
+            fetcher={fetcher}
+            onClick={onClick}
+            isLoading={isLoading}
+            isDisabled={isDisabled}
+            className={className}
+            analytics={analytics}
+          >
+            {children}
+          </AddToCartButtonInner>
+        );
+      }}
+    </CartForm>
+  );
+}
+
+/** @typedef {import('react-router').FetcherWithComponents} FetcherWithComponents */
+/** @typedef {import('@shopify/hydrogen').OptimisticCartLineInput} OptimisticCartLineInput */
